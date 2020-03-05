@@ -1,0 +1,14 @@
+.idea/
+.vscode/
+.DS_Store
+.nbproject/
+*.lock
+!yarn.lock
+*.log
+out/
+dist/
+node_modules/
+coverage/
+/nbproject/private/
+/nbproject
+/nbproject/

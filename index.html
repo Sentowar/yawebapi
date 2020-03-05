@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Гео-отзывы</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://api-maps.yandex.ru/2.1/?apikey=19ee4c56-230f-4cea-a7d2-5b4f43d071ce&lang=ru_RU" type="text/javascript"></script>
+</head>
+<body>
+    <div id="map"></div>
+    <div class="new-review">
+        <div class="new-review__header">
+            <div class="new-review__header-title">
+                Невский пр., 78, Санкт-Петербург, 191025
+            </div>
+                <a href="#" class="new-review__header-close"></a>
+        </div>
+        <div class="new-review__content">
+            <div class="new-review__wrapper">
+            </div>
+            <form action="" class="new-review__form">
+                <div class="new-review__form-header">Ваш отзыв</div>
+                <div class="new-review__form-wrapper">
+                    <input type="text" class="new-review__form-input" name="name" placeholder="Ваше имя">
+                </div>
+                <div class="new-review__form-wrapper">
+                    <input type="text" class="new-review__form-input" name="place" placeholder="Укажите место">
+                </div>
+                <div class="new-review__form-wrapper new-review__form-wrapper_last">
+                    <textarea name="text" class="new-review__form-textarea" placeholder="Поделитесь впечатлениями"></textarea>
+                </div>
+                <div class="new-review__form-wrapper2 clearfix">
+                    <a href="#" class="new-review__form-link">Добавить</a>					
+                </div>
+            </form>
+        </div>
+    </div>
+    <script data-main="js/main" src="js/require.js"></script>
+    <script type="text/x-handlebars-template" id="reviews-list">
+        <ul class="new-review__list">
+            {{#if list}}
+                {{#each list}}
+                    <li class="new-review__item">
+                        <div class="new-review__item-title">
+                            <span class="new-review__item-author">{{name}}</span>
+                            <span class="new-review__item-place">{{place}}</span>
+                            <span class="new-review__item-date">{{formatDate date}}</span>
+                        </div>
+                        <div class="new-review__item-content">
+                            {{text}}
+                        </div>
+                    </li>
+                    {{/each}}
+                    {{else}}
+                    <li class="new-review__item">
+                        <div class="new-review__item-content">
+                            Отзывов нет..
+                        </div>
+                    </li>
+            {{/if}}
+    </ul>
+    </script>
+</body>
+</html>
