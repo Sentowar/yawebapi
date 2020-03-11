@@ -49,6 +49,12 @@ const points = [
          'time': '01.01.2020'}
     ]
 
+//let points = localStorage.getItem('points');
+
+//if(points===null){
+//    points = [];
+//}
+
 function init(){ 
     var myMap = new ymaps.Map("map", {
 	center: [55.76, 37.64],
@@ -61,7 +67,7 @@ function init(){
         '<a href="#" id="go_to_balloon">{{properties.address|raw}}</a>' + 
         '<div>{{ properties.reviews|raw}}</div>' +
         '<div>{{properties.time|raw}}</div>'+
-        '<input type="hidden" value="{{properties.coords}}" id="place_coords">',
+        '<input type="hidden" value="{{properties.index}}" id="place_index">',
         {
             build: function () {
                 // Сначала вызываем метод build родительского класса.
@@ -79,18 +85,18 @@ function init(){
                 carouselBalloonLayout.superclass.clear.call(this);
             },
             
-            go_to_balloon: function() { 
-                const coords = document.querySelector('#place_coords').value;
-                console.log(coords);
-                myMap.balloon.open(coords, {},
-                    {contentLayout: newReviewBalloonLayout}
-                );
+            go_to_balloon: function() {  
+                let i = document.querySelector("#place_index").value;                
+                clusterer.balloon.close();
+                myMap.setCenter(points[i].coords, 12, {});
+                geoObjects[i].balloon.open();
             }
         }
     );
+    
     var newReviewBalloonLayout = ymaps.templateLayoutFactory.createClass(
-        '<div>{{address}}</div>'+
-        '<div id="all_reviews" style="height: 100px; max-height: 150px; overflow: hidden">{% if properties.reviews %} {{ properties.reviews|raw }} {% else %} Отзывов пока нет {% endif %}</div>'+
+        '<div>{% if properties.address %} {{properties.address}} {% else %} {{address}} {% endif %}</div>'+
+        '<div id="all_reviews" style="height: 100px; max-height: 150px; overflow: scroll">{% if properties.reviews %} {{ properties.reviews|raw }} {% else %} Отзывов пока нет {% endif %}</div>'+
         '<div>Имя: <input type="text" id="user_name"></div>'+
         '<div>Место: <input type="text" id="user_place"></div>'+
         '<div>Оставьте отзыв: <textarea id="user_review"></textarea></div>'+
@@ -115,7 +121,6 @@ function init(){
             sendReview : function(){
                 const newPlace = {};
                 const newPlacemarks = [];
-                console.log(document.querySelector('#user_coords').value);
                 const coords = JSON.parse(document.querySelector('#user_coords').value);
                 newPlace.coords = coords;
                 newPlace.name = document.querySelector('#user_name').value;
@@ -124,30 +129,42 @@ function init(){
                 const now = new Date();
                 newPlace.time = now.getDate() +'.'+ now.getMonth() + '.' + now.getFullYear()
                 points.push(newPlace);
+                localStorage.points = points;
+                let i = 0;
+                var promise = new Promise((resolve, reject)=>{
+                    while (newPlacemarks[i]===null){
+                        i++;
+                    }
+                    resolve(i);
+                });
                 
-                newPlacemarks[newPlace.time] = new ymaps.Placemark(coords, {
-                    reviews: newPlace.name + ':' + newPlace.review,
-                    time: newPlace.time
-                },
-                {balloonContentLayout: newReviewBalloonLayout});
-                getAddress(coords, newPlacemarks[newPlace.time]);
-                myMap.geoObjects.add(newPlacemarks[newPlace.time]);
+                promise.
+                    then(i=>{
+                        newPlacemarks[i] = new ymaps.Placemark(coords, {
+                        reviews: newPlace.name + ':' + newPlace.review,
+                        time: newPlace.time
+                    },
+                    {balloonContentLayout: newReviewBalloonLayout});
+                    });
                 
-                geoObjectsFinal.push(newPlacemarks[newPlace.time])
-                clusterer.add(geoObjectsFinal);
-                myMap.geoObjects.add(clusterer);
-
                 let reviews = document.querySelector('#all_reviews');
                 const newReview = document.createElement('p');
                 newReview.style.margin = "0";
                 newReview.innerHTML = newPlace.place + ':' + newPlace.review;
-                if(reviews.querySelector('p')==null){
+                if(reviews.querySelector('p')===null){
                     reviews.innerHTML = '';
                 }
                 reviews.append(newReview);
                 document.querySelector('#user_name').value = '';
                 document.querySelector('#user_place').value = '';
                 document.querySelector('#user_review').value = '';
+                
+                getAddress(coords, newPlacemarks[newPlace.time]);
+                myMap.geoObjects.add(newPlacemarks[newPlace.time]);
+                
+                geoObjectsFinal.push(newPlacemarks[newPlace.time])
+                clusterer.add(geoObjectsFinal);
+                myMap.geoObjects.add(clusterer);
             }
         }
     );
@@ -197,20 +214,23 @@ function init(){
     
     let addedCoords = {};
 
+    if(points){
     for (var i = 0, len = points.length; i < len; i++) {
         if(addedCoords[points[i].coords]==undefined){
             geoObjects[i] = new ymaps.Placemark(points[i].coords, {
-                reviews : [points[i].name + ': ' + points[i].review + '<br>'],
+                reviews : ['<p style="margin: 0;">' + points[i].name + ': ' + points[i].review + '</p>'],
                 time: points[i].time,
-                coords : JSON.stringify(points[i].coords)
+                coords : JSON.stringify(points[i].coords),
+                index : i
                 },
                 {balloonContentLayout: newReviewBalloonLayout}
             );
             getAddress(points[i].coords, geoObjects[i]);
             addedCoords[points[i].coords]=i;
         }else{
-            geoObjects[addedCoords[points[i].coords]].properties._data.reviews.push(points[i].name + ': ' + points[i].review + '<br>'); 
+            geoObjects[addedCoords[points[i].coords]].properties._data.reviews.push('<p style="margin: 0;">' + points[i].name + ': ' + points[i].review + '</p>'); 
         }
+    }
     }
     let geoObjectsFinal = geoObjects.filter(el => el!==null);
     clusterer.add(geoObjectsFinal);
@@ -220,8 +240,6 @@ function init(){
 function getAddress(coords, placemark) {
     ymaps.geocode(coords).then(function (res) {
         var firstGeoObject = res.geoObjects.get(0);
-        //console.log(firstGeoObject.properties._data.name);
-        //console.log(firstGeoObject.getAddressLine());
         placemark.properties.set({
             address: firstGeoObject.getAddressLine()
         });
