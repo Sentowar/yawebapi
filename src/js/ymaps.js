@@ -1,59 +1,61 @@
 ymaps.ready(init);
 
-const points = [
-        {'coords':[55.831903,37.411961],
-         'name':'test1',
-         'place':'place1',
-         'review':'review1',
-         'time': '01.01.2020'
-        },
-        {'coords':[55.831903,37.411961],
-         'name':'test11',
-         'place':'place1',
-         'review':'review11',
-         'time': '01.01.2020'},
-        {'coords':[55.831903,37.411961],
-         'name':'test111',
-         'place':'place1',
-         'review':'review111',
-         'time': '01.01.2020'},
-        {'coords': [55.763338,37.565466],
-        'name':'test2',
-        'place':'place1',
-        'review': 'review2',
-         'time': '01.01.2020'},
-        {'coords':[55.763338,37.565466],
-         'name':'test3',
-         'place':'place1',
-         'review':'reiew3',
-         'time': '01.01.2020'},
-        {'coords':[55.744522,37.616378],
-         'name':'test4',
-         'place':'place1',
-         'review':'review4',
-         'time': '01.01.2020'},
-        {'coords':[55.780898,37.642889],
-         'name':'test5',
-         'place':'place1',
-         'review':'review5',
-         'time': '01.01.2020'},
-        {'coords':[55.793559,37.435983],
-         'name':'test6',
-         'place':'place1',
-         'review':'review6',
-         'time': '01.01.2020'},
-        {'coords':[55.800584,37.675638],
-         'name':'test7',
-         'place':'place1',
-         'review':'review7',
-         'time': '01.01.2020'}
-    ]
+//const points = [
+//        {'coords':[55.831903,37.411961],
+//         'name':'test1',
+//         'place':'place1',
+//         'review':'review1',
+//         'time': '01.01.2020'
+//        },
+//        {'coords':[55.831903,37.411961],
+//         'name':'test11',
+//         'place':'place1',
+//         'review':'review11',
+//         'time': '01.01.2020'},
+//        {'coords':[55.831903,37.411961],
+//         'name':'test111',
+//         'place':'place1',
+//         'review':'review111',
+//         'time': '01.01.2020'},
+//        {'coords': [55.763338,37.565466],
+//        'name':'test2',
+//        'place':'place1',
+//        'review': 'review2',
+//         'time': '01.01.2020'},
+//        {'coords':[55.763338,37.565466],
+//         'name':'test3',
+//         'place':'place1',
+//         'review':'reiew3',
+//         'time': '01.01.2020'},
+//        {'coords':[55.744522,37.616378],
+//         'name':'test4',
+//         'place':'place1',
+//         'review':'review4',
+//         'time': '01.01.2020'},
+//        {'coords':[55.780898,37.642889],
+//         'name':'test5',
+//         'place':'place1',
+//         'review':'review5',
+//         'time': '01.01.2020'},
+//        {'coords':[55.793559,37.435983],
+//         'name':'test6',
+//         'place':'place1',
+//         'review':'review6',
+//         'time': '01.01.2020'},
+//        {'coords':[55.800584,37.675638],
+//         'name':'test7',
+//         'place':'place1',
+//         'review':'review7',
+//         'time': '01.01.2020'}
+//    ]
 
-//let points = localStorage.getItem('points');
+let points = localStorage.getItem('points');
 
-//if(points===null){
-//    points = [];
-//}
+if(points===null){
+    points = [];
+}else{
+    points = JSON.parse(points);
+}
 
 function init(){ 
     var myMap = new ymaps.Map("map", {
@@ -129,23 +131,17 @@ function init(){
                 const now = new Date();
                 newPlace.time = now.getDate() +'.'+ now.getMonth() + '.' + now.getFullYear()
                 points.push(newPlace);
-                localStorage.points = points;
+                localStorage.points = JSON.stringify(points);
                 let i = 0;
-                var promise = new Promise((resolve, reject)=>{
-                    while (newPlacemarks[i]===null){
-                        i++;
-                    }
-                    resolve(i);
-                });
-                
-                promise.
-                    then(i=>{
-                        newPlacemarks[i] = new ymaps.Placemark(coords, {
-                        reviews: newPlace.name + ':' + newPlace.review,
-                        time: newPlace.time
-                    },
+                while (newPlacemarks[i]===null){
+                    i++;
+                }
+
+                newPlacemarks[i] = new ymaps.Placemark(coords, {
+                    reviews: newPlace.name + ':' + newPlace.review,
+                    time: newPlace.time
+                },
                     {balloonContentLayout: newReviewBalloonLayout});
-                    });
                 
                 let reviews = document.querySelector('#all_reviews');
                 const newReview = document.createElement('p');
@@ -159,10 +155,10 @@ function init(){
                 document.querySelector('#user_place').value = '';
                 document.querySelector('#user_review').value = '';
                 
-                getAddress(coords, newPlacemarks[newPlace.time]);
-                myMap.geoObjects.add(newPlacemarks[newPlace.time]);
+                getAddress(coords, newPlacemarks[i]);
+                myMap.geoObjects.add(newPlacemarks[i]);
                 
-                geoObjectsFinal.push(newPlacemarks[newPlace.time])
+                geoObjectsFinal.push(newPlacemarks[i])
                 clusterer.add(geoObjectsFinal);
                 myMap.geoObjects.add(clusterer);
             }
@@ -218,7 +214,7 @@ function init(){
     for (var i = 0, len = points.length; i < len; i++) {
         if(addedCoords[points[i].coords]==undefined){
             geoObjects[i] = new ymaps.Placemark(points[i].coords, {
-                reviews : ['<p style="margin: 0;">' + points[i].name + ': ' + points[i].review + '</p>'],
+                reviews : [`<p style="margin: 0;"> ${points[i].place} (${points[i].name}): ${points[i].review}</p>`],
                 time: points[i].time,
                 coords : JSON.stringify(points[i].coords),
                 index : i
@@ -228,7 +224,7 @@ function init(){
             getAddress(points[i].coords, geoObjects[i]);
             addedCoords[points[i].coords]=i;
         }else{
-            geoObjects[addedCoords[points[i].coords]].properties._data.reviews.push('<p style="margin: 0;">' + points[i].name + ': ' + points[i].review + '</p>'); 
+            geoObjects[addedCoords[points[i].coords]].properties._data.reviews.push(`<p style="margin: 0;">${points[i].place} (${points[i].name}): ${points[i].review}</p>`); 
         }
     }
     }
